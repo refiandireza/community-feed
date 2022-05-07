@@ -2,6 +2,8 @@ import { useRouter } from "next/router";
 import {useState, useEffect} from 'react'
 import styled from 'styled-components'
 import Card from "../../components/Card";
+import Head from 'next/head';
+import Spinner from '../../components/Spinner';
 
 const QuestionDetailContainer = styled.div`
     display: flex;
@@ -14,14 +16,16 @@ function QuestionDetail() {
     const router = useRouter();
     const {id} = router.query;
 
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
     const [question, setQuestion] = useState({});
 
     useEffect(() => {
-        const url = `https://api.stackexchange.com/2.2/questions/${id}?site=stackoverflow`;
+      const url = `https://api.stackexchange.com/2.2/questions/${id}?site=stackoverflow`;
         async function fetchData() {
+            // setLoading(true);
             const data = await fetch(url)
             const result = await data.json();
+            console.log(result);
 
             if(result) {
                 setQuestion(result.items[0]);
@@ -32,23 +36,32 @@ function QuestionDetail() {
         id && fetchData();
     }, [id])
 
-    return (
-    <QuestionDetailContainer>
-        <h2>Question: {id}</h2>
-        <h3>{question.title}</h3>
-        {/* {loading ? 
-        (<span>Loading...</span>)
-        : (
-          <Card
-            key={question.question_id}
-            title={question.title}
-            views={question.view_count}
-            answers={question.answer_count}
-            tags={question.tags}
+    const renderResult = (
+      <>
+        <Head>
+          <title>{question.title}</title>
+        </Head>
+        <QuestionDetailContainer>
+            <Card
+              key={question.question_id}
+              title={question.title}
+              views={question.view_count}
+              answers={question.answer_count}
+              tags={question.tags}
             />
-        )
-      } */}
-    </QuestionDetailContainer>
+            {/* <h2>{question.title}</h2> */}
+            {/* {question.tags.map((tag, index) => (
+              <li key={index}>{tag}</li>
+            ))} */}
+            
+        </QuestionDetailContainer>
+      </>
+    )
+
+    return (
+    <>
+      {loading ? <Spinner/> : renderResult}
+    </>
   )
 }
 

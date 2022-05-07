@@ -1,10 +1,9 @@
-import {useState, useEffect} from 'react'
 import styled from 'styled-components'
 import Card from '../../components/Card';
+import Head from 'next/head';
 import Link from 'next/link';
-import {useRouter} from 'next/router';
-import Spinner from '../../components/Spinner';
 import Pagination from '../../components/Pagination';
+
 
 const QuestionsContainer = styled.div`
     display: flex;
@@ -17,34 +16,13 @@ const CardLink = styled.a`
   text-decoration: none;
 `;
 
-function Questions() {
-  const [loading, setLoading] = useState(false);
-  const [questions, setQuestions] = useState([]);
-  const [hasMore, setHasMore] = useState(false);
-
-  const router = useRouter();
-  const {page} = router.query;
-
-  useEffect(() => {
-      setLoading(true);
-      const url = `https://api.stackexchange.com/2.2/questions?${page ? 'page=' + page + '&' : ''}order=desc&sort=hot&tagged=reactjs&site=stackoverflow`;
-      const fetchData = async () => {
-      const data = await fetch(url);
-      const result = await data.json();
-
-      if (result) {
-        setQuestions(result.items);
-        setHasMore(result.has_more);
-        console.log(url);
-        setLoading(false);
-      }
-    }
-    fetchData();
-  }, [page]);
-
-  const result = (
-    <>
-      <h2>Questions : </h2>
+function Questions({questions, hasMore, page}) {
+  return (
+  <> 
+    <Head>
+      <title>Questions</title>
+    </Head>
+    <QuestionsContainer>
       <div>
         {questions.map((question) => (
               <Link
@@ -67,14 +45,26 @@ function Questions() {
             ))}
       </div>
       <Pagination currentPage={parseInt(page) || 1} hasMore={hasMore}/>
-    </>
-
-  )
-  return (
-    <QuestionsContainer>
-      {loading ? <Spinner/> : result}
     </QuestionsContainer>
+  </> 
   )
+}
+
+export async function getServerSideProps(context) {
+  const {page} = context.query;
+
+  const url = `https://api.stackexchange.com/2.2/questions?${page ? 'page=' + page + '&' : ''}order=desc&sort=hot&tagged=reactjs&site=stackoverflow`;
+  const data = await fetch(url);
+  const result = await data.json();
+  console.log(result);
+
+  return {
+    props: {
+      questions: result.items,
+      hasMore: result.has_more,
+      page: page || 1
+    }
+  }
 }
 
 export default Questions
